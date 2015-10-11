@@ -1,32 +1,64 @@
-var mtd = require('mt-downloader');
+var MultiThreadedDownloader = require('mt-files-downloader');
 
 var downloader = function() {
   this.downloadUrl;
   this.filePath;
 };
 
-downloader.options = {
-  count: 8,
-  method: 'GET',
-  port: 80,
-  range: '0-100',
-
-  onStart: function(meta) {
-    console.log('Download Started for Url = ' + this.downloadUrl + '\nMeta = ' + meta);
-  },
-
-  onEnd: function(err, result) {
-    if (err) {
-      console.error('Error while downloading Url = ' + this.downloadUrl + '\nError: ' + err);
-    }
-    console.log('Download Completed for Url = ' + this.downloadUrl);
-  }
-};
-
 
 downloader.prototype.download = function() {
-  var multiThreadDownloader = new mtd(this.filePath, this.downloadUrl, this.options);
-  multiThreadDownloader.start();
+  var dl = new MultiThreadedDownloader();
+  var dl = dl.download(this.downloadUrl, this.filePath);
+
+  // Set retry options
+  dl.setRetryOptions({
+    maxRetries: 3, // Default: 5
+    retryInterval: 1000 // Default: 2000
+  });
+
+  // Set download options
+  dl.setOptions({
+    threadsCount: 2, // Default: 2, Set the total number of download threads
+    method: 'GET', // Default: GET, HTTP method
+    port: 80, // Default: 80, HTTP port
+    timeout: 5000, // Default: 5000, If no data is received, the download times out (milliseconds)
+    range: '0-100', // Default: 0-100, Control the part of file that needs to be downloaded.
+  });
+
+  var num = this.filePath;
+
+  var timer = setInterval(function() {
+		if(dl.status == 0) {
+			console.log('Download '+ num +' not started.');
+		} else if(dl.status == 1) {
+			var stats = dl.getStats();
+			console.log('Download '+ num +' is downloading:');
+			console.log('Download progress: '+ stats.total.completed +' %');
+			console.log('Download speed: '+ MultiThreadedDownloader.Formatters.speed(stats.present.speed));
+			console.log('Download time: '+ MultiThreadedDownloader.Formatters.elapsedTime(stats.present.time));
+			console.log('Download ETA: '+ MultiThreadedDownloader.Formatters.remainingTime(stats.future.eta));
+		} else if(dl.status == 2) {
+			console.log('Download '+ num +' error... retrying');
+		} else if(dl.status == 3) {
+			console.log('Download '+ num +' completed !');
+		} else if(dl.status == -1) {
+			console.log('Download '+ num +' error : '+ dl.error);
+		} else if(dl.status == -2) {
+			console.log('Download '+ num +' stopped.');
+		} else if(dl.status == -3) {
+			console.log('Download '+ num +' destroyed.');
+		}
+
+		console.log('------------------------------------------------');
+
+		if(dl.status === -1 || dl.status === 3 || dl.status === -3) {
+			clearInterval(timer);
+			timer = null;
+		}
+	}, 1000);
+
+
+  dl.start();
 }
 
 module.exports = new downloader();
