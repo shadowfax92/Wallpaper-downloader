@@ -8,7 +8,10 @@ var path = require('path');
 // global variables
 sample_url =
   'http://www.allmacwallpaper.com/retina-macbook-pro-wallpapers/Views/1';
+format_url = 'http://www.allmacwallpaper.com/retina-macbook-pro-wallpapers/Views/';
 base_url = 'http://www.allmacwallpaper.com/';
+range_start = 5;
+range_end = 15;
 
 // init
 if (process.argv.length > 2) {
@@ -19,7 +22,12 @@ else {
   return;
 }
 
-getUrl(sample_url);
+// loop downloader in range
+for (var i = range_start; i<=range_end; ++i) {
+  var extractUrl = format_url + i.toString();
+  console.log("Extract url = " + extractUrl);
+  getUrl(extractUrl);
+}
 
 // functions
 function getUrl(url) {

@@ -57,6 +57,27 @@ downloader.prototype.download = function() {
 		}
 	}, 1000);
 
+  // event handlers
+  dl.on('end', function() {
+		console.log('EVENT - Download '+ num +' finished !');
+
+		console.log(dl.getStats());
+	});
+  dl.on('error', function() {
+		console.log('EVENT - Download '+ num +' error !');
+		console.log(dl.error);
+	});
+  dl.on('retry', function() {
+		console.log('EVENT - Download '+ num +' error, retrying...');
+	});
+
+	dl.on('stopped', function() {
+		console.log('EVENT - Download '+ num +' stopped...');
+	});
+
+	dl.on('destroyed', function() {
+		console.log('EVENT - Download '+ num +' destroyed...');
+	});
 
   dl.start();
 }
